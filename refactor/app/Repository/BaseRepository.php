@@ -141,7 +141,7 @@ class BaseRepository
      * @param null $rules
      * @param array $messages
      * @param array $customAttributes
-     * @return bool
+     * @return array
      * @throws ValidationException
      */
     public function validate(array $data = [], $rules = null, array $messages = [], array $customAttributes = [])
@@ -185,7 +185,7 @@ class BaseRepository
 
     /**
      * @param \Illuminate\Validation\Validator $validator
-     * @return bool
+     * @return array
      * @throws ValidationException
      */
     protected function _validate(\Illuminate\Validation\Validator $validator)
@@ -195,11 +195,11 @@ class BaseRepository
         }
 
         if ($validator->fails()) {
-            return false;
+            return ['status'=>false, 'message'=> $validator->errors()->all()[0], 'key'=>$validator->errors()->keys()[0]];
             throw (new ValidationException)->setValidator($validator);
         }
 
-        return true;
+        return ['status'=>true, 'message'=> ''];
     }
 
 }

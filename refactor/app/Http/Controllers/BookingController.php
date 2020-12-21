@@ -5,6 +5,7 @@ namespace DTApi\Http\Controllers;
 use DTApi\Models\Job;
 use DTApi\Http\Requests;
 use DTApi\Models\Distance;
+use DTApi\Repository\UserRepository;
 use Illuminate\Http\Request;
 use DTApi\Repository\BookingRepository;
 
@@ -19,14 +20,16 @@ class BookingController extends Controller
      * @var BookingRepository
      */
     protected $repository;
+    protected $user_repo;
 
     /**
      * BookingController constructor.
      * @param BookingRepository $bookingRepository
      */
-    public function __construct(BookingRepository $bookingRepository)
+    public function __construct(BookingRepository $bookingRepository, UserRepository $user_repo)
     {
         $this->repository = $bookingRepository;
+        $this->user_repo = $user_repo;
     }
 
     /**
@@ -35,13 +38,24 @@ class BookingController extends Controller
      */
     public function index(Request $request)
     {
-        if($user_id = $request->get('user_id')) {
+        if($user = $this->user_repo->find($request->get('user_id')) ) {
+            $e_page = isset($request->epage) ? $request->epage : 0;
+            $n_page = isset($request->npage) ? $request->npage : 0;
 
-            $response = $this->repository->getUsersJobs($user_id);
+            $response['emergencyJobs'] = $emergencyJobs = $this->repository->getUsersJobs($user, ['immediate' => 'yes', 'job_type' => 'new'], $e_page);
+            $response['normalJobs'] = $normalJobs = $this->repository->getUsersJobs($user, ['immediate' => 'no', 'job_type' => 'new'], $n_page);
 
-        }
-        elseif($request->__authenticatedUser->user_type == env('ADMIN_ROLE_ID') || $request->__authenticatedUser->user_type == env('SUPERADMIN_ROLE_ID'))
-        {
+            $response['cuser'] = $user;
+
+            if($user->is('customer'))
+                $response['usertype'] = 'customer';
+            elseif ($user->is('translator'))
+                $response['usertype'] = 'translator';
+            else
+                $response['usertype'] = 'unknown';
+
+
+        } elseif($request->__authenticatedUser->user_type == env('ADMIN_ROLE_ID') || $request->__authenticatedUser->user_type == env('SUPERADMIN_ROLE_ID')){
             $response = $this->repository->getAll($request);
         }
 
@@ -107,12 +121,24 @@ class BookingController extends Controller
      */
     public function getHistory(Request $request)
     {
-        if($user_id = $request->get('user_id')) {
+        if($user = $this->user_repo->find($request->get('user_id')) ) {
+            $e_page = isset($request->epage) ? $request->epage : 0;
+            $n_page = isset($request->npage) ? $request->npage : 0;
 
-            $response = $this->repository->getUsersJobsHistory($user_id, $request);
+            $response['emergencyJobs'] = $emergencyJobs = $this->repository->getUsersJobs($user, ['immediate' => 'yes', 'job_type' => 'historic'], $e_page);
+            $response['normalJobs'] = $normalJobs = $this->repository->getUsersJobs($user, ['immediate' => 'no', 'job_type' => 'historic'], $n_page);
+
+            $response['cuser'] = $user;
+
+            if($user->is('customer'))
+                $response['usertype'] = 'customer';
+            elseif ($user->is('translator'))
+                $response['usertype'] = 'translator';
+            else
+                $response['usertype'] = 'unknown';
+
             return response($response);
         }
-
         return null;
     }
 
@@ -124,8 +150,9 @@ class BookingController extends Controller
     {
         $data = $request->all();
         $user = $request->__authenticatedUser;
+        $job_id = $data['job_id'];
 
-        $response = $this->repository->acceptJob($data, $user);
+        $response = $this->repository->acceptJob($job_id, $user);
 
         return response($response);
     }
@@ -135,7 +162,7 @@ class BookingController extends Controller
         $data = $request->get('job_id');
         $user = $request->__authenticatedUser;
 
-        $response = $this->repository->acceptJobWithId($data, $user);
+        $response = $this->repository->acceptJob($data, $user);
 
         return response($response);
     }
