@@ -20,16 +20,16 @@ class BookingController extends Controller
      * @var BookingRepository
      */
     protected $repository;
-    protected $user_repo;
+    protected $userRepository;
 
     /**
      * BookingController constructor.
      * @param BookingRepository $bookingRepository
      */
-    public function __construct(BookingRepository $bookingRepository, UserRepository $user_repo)
+    public function __construct(BookingRepository $bookingRepository, UserRepository $userRepository)
     {
         $this->repository = $bookingRepository;
-        $this->user_repo = $user_repo;
+        $this->userRepository = $userRepository;
     }
 
     /**
@@ -38,16 +38,16 @@ class BookingController extends Controller
      */
     public function index(Request $request)
     {
-        if($user = $this->user_repo->find($request->get('user_id')) ) {
-            $e_page = isset($request->epage) ? $request->epage : 0;
-            $n_page = isset($request->npage) ? $request->npage : 0;
+        if ($user = $this->userRepository->find($request->get('user_id'))) {
+            $ePage = isset($request->epage) ? $request->epage : 0;
+            $nPage = isset($request->npage) ? $request->npage : 0;
 
-            $response['emergencyJobs'] = $emergencyJobs = $this->repository->getUsersJobs($user, ['immediate' => 'yes', 'job_type' => 'new'], $e_page);
-            $response['normalJobs'] = $normalJobs = $this->repository->getUsersJobs($user, ['immediate' => 'no', 'job_type' => 'new'], $n_page);
+            $response['emergencyJobs'] = $emergencyJobs = $this->repository->getUsersJobs($user, ['immediate' => 'yes', 'job_type' => 'new'], $ePage);
+            $response['normalJobs'] = $normalJobs = $this->repository->getUsersJobs($user, ['immediate' => 'no', 'job_type' => 'new'], $nPage);
 
             $response['cuser'] = $user;
 
-            if($user->is('customer'))
+            if ($user->is('customer'))
                 $response['usertype'] = 'customer';
             elseif ($user->is('translator'))
                 $response['usertype'] = 'translator';
@@ -55,7 +55,7 @@ class BookingController extends Controller
                 $response['usertype'] = 'unknown';
 
 
-        } elseif($request->__authenticatedUser->user_type == env('ADMIN_ROLE_ID') || $request->__authenticatedUser->user_type == env('SUPERADMIN_ROLE_ID')){
+        } elseif ($request->__authenticatedUser->user_type == env('ADMIN_ROLE_ID') || $request->__authenticatedUser->user_type == env('SUPERADMIN_ROLE_ID')) {
             $response = $this->repository->getAll($request);
         }
 
@@ -121,16 +121,16 @@ class BookingController extends Controller
      */
     public function getHistory(Request $request)
     {
-        if($user = $this->user_repo->find($request->get('user_id')) ) {
-            $e_page = isset($request->epage) ? $request->epage : 0;
-            $n_page = isset($request->npage) ? $request->npage : 0;
+        if ($user = $this->userRepository->find($request->get('user_id'))) {
+            $ePage = isset($request->epage) ? $request->epage : 0;
+            $nPage = isset($request->npage) ? $request->npage : 0;
 
-            $response['emergencyJobs'] = $emergencyJobs = $this->repository->getUsersJobs($user, ['immediate' => 'yes', 'job_type' => 'historic'], $e_page);
-            $response['normalJobs'] = $normalJobs = $this->repository->getUsersJobs($user, ['immediate' => 'no', 'job_type' => 'historic'], $n_page);
+            $response['emergencyJobs'] = $emergencyJobs = $this->repository->getUsersJobs($user, ['immediate' => 'yes', 'job_type' => 'historic'], $ePage);
+            $response['normalJobs'] = $normalJobs = $this->repository->getUsersJobs($user, ['immediate' => 'no', 'job_type' => 'historic'], $nPage);
 
             $response['cuser'] = $user;
 
-            if($user->is('customer'))
+            if ($user->is('customer'))
                 $response['usertype'] = 'customer';
             elseif ($user->is('translator'))
                 $response['usertype'] = 'translator';
@@ -244,12 +244,12 @@ class BookingController extends Controller
         }
 
         if ($data['flagged'] == 'true') {
-            if($data['admincomment'] == '') return "Please, add comment";
+            if ($data['admincomment'] == '') return "Please, add comment";
             $flagged = 'yes';
         } else {
             $flagged = 'no';
         }
-        
+
         if ($data['manually_handled'] == 'true') {
             $manually_handled = 'yes';
         } else {
